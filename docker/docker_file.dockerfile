@@ -1,6 +1,6 @@
 # Dockerfile for Streamlit App with Azure Storage Support
-
-FROM python:3.10
+# syntax=docker/dockerfile:1
+FROM docker.io/library/python:3.12-slim
 
 RUN pip install --upgrade pip
 
@@ -12,10 +12,10 @@ EXPOSE 8080
 
 WORKDIR /app
 
-COPY . .
+COPY ../app .
 
 RUN pip install --no-cache-dir -r requirements.txt 
 
 
-ENTRYPOINT ["streamlit", "run", "streamlit_app.py"]
+ENTRYPOINT ["streamlit", "run", "app.py"]
 #CMD streamlit run app.py
