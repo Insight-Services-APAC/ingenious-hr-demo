@@ -7,9 +7,6 @@ import json
 import os
 from typing import Dict, Any
 
-from services.blob_storage import AzureBlobClient
-
-
 def convert_text_to_job_criteria_json(text: str) -> Dict[str, Any]:
     """Convert extracted text from document to a simple job criteria JSON format.
 

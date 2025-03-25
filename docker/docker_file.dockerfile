@@ -10,9 +10,9 @@ ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
 
 EXPOSE 8080
 
-WORKDIR /app
+WORKDIR /src
 
-COPY ../app .
+COPY ../src .
 
 RUN pip install --no-cache-dir -r requirements.txt 
 

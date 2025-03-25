@@ -7,27 +7,17 @@ tools for recruitment processes.
 """
 
 import streamlit as st
-
-# Import configuration
 from config import configure_page
-
-# Import services
 from services import extract_text_from_file
-
-# Import UI components
 from ui.main_page import process_cvs, display_results
 from ui.sidebar import render_sidebar
-
-# Import utilities
 from utils.helpers import convert_text_to_job_criteria_json, update_job_criteria_in_azure
 
 
 def main():
     """Main application entry point."""
-    # Configure Streamlit page
     configure_page()
 
-    # Display the application title
     st.title("📄 CV Analysis Tool")
 
     # Initialize session state if not exists
@@ -36,7 +26,6 @@ def main():
         st.session_state['results'] = []
         st.session_state['thread_ids'] = []
 
-    # Render sidebar and get user inputs
     uploaded_files, process_button = render_sidebar()
 
     # Main content area
@@ -44,7 +33,6 @@ def main():
         st.info(
             "Please upload one or more CV files from the sidebar to begin analysis.")
 
-        # Show example
         with st.expander("View Example Analysis"):
             st.markdown("""
             ### Example CV Analysis Result
@@ -84,16 +72,13 @@ def main():
     elif process_button or st.session_state.get('analysis_completed'):
         # Process CVs if button was clicked or we already have results
         if not st.session_state['analysis_completed'] and process_button:
-            # Process the uploaded CVs
             results = process_cvs(uploaded_files)
 
-            # Store results in session state
             st.session_state['results'] = results
             st.session_state['thread_ids'] = [
                 r.get("Thread ID", "") for r in results]
             st.session_state['analysis_completed'] = True
 
-        # Display the results
         display_results(st.session_state.get('results', []))
 
 
