@@ -82,3 +82,4 @@ fi
 
 # Confirmation
 echo "Image successfully built for amd64, pushed to Azure"
+
