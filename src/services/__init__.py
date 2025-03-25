@@ -9,12 +9,13 @@ from services.text_extraction import (
     extract_text_from_pdf,
     extract_text_from_docx
 )
-from services.openai_client import summarize_cv_analyses
+from services.openai_client import summarize_cv_analyses, generate_interview_questions
 
 __all__ = [
     'APIClient',
     'extract_text_from_file',
     'extract_text_from_pdf',
     'extract_text_from_docx',
-    'summarize_cv_analyses'
+    'summarize_cv_analyses',
+    'generate_interview_questions'
 ]

@@ -1,5 +1,5 @@
 """
-Azure OpenAI client for summarizing multiple CV analyses.
+Azure OpenAI client for summarizing multiple CV analyses and generating interview questions.
 """
 
 import streamlit as st
@@ -123,6 +123,68 @@ def build_comparison_prompt(analyses: List[Dict[str, Any]]) -> str:
     prompt += "Please compare the candidates based on their qualifications, experience, skills, and overall suitability for the position. Highlight the strongest candidates and explain why. Create a table comparing key aspects across all candidates and provide a final ranking with rationale."
     
     return prompt
+
+
+def build_interview_questions_prompt(analysis: Dict[str, Any]) -> str:
+    """
+    Build a prompt for generating interview questions based on CV analysis.
+    
+    Args:
+        analysis: Dictionary containing CV analysis data
+        
+    Returns:
+        Formatted prompt for OpenAI
+    """
+    cv_name = analysis.get("CV Name", "Unnamed CV")
+    analysis_text = extract_analysis_content(analysis)
+    
+    prompt = f"""Generate 5 tailored interview questions for the candidate based on the following CV analysis:
+
+CV: {cv_name}
+Analysis: {analysis_text}
+
+Please include:
+1. At least one probing question if you detect any inconsistencies between claimed skills and actual experience
+2. Questions focused on verifying the depth of knowledge in key technical areas mentioned in the CV
+3. Behavioral questions related to the role requirements
+4. Questions addressing any potential gaps in their profile relative to the job requirements
+
+Format the questions as a numbered list with brief explanations for why each question is important to ask.
+"""
+    
+    return prompt
+
+
+def generate_interview_questions(analysis: Dict[str, Any]) -> str:
+    """
+    Generate tailored interview questions based on a CV analysis.
+    
+    Args:
+        analysis: Dictionary containing CV analysis data
+        
+    Returns:
+        List of interview questions with explanations
+    """
+    client = AzureOpenAIClient()
+    prompt = build_interview_questions_prompt(analysis)
+    
+    system_message = {
+        "role": "system", 
+        "content": "You are an AI assistant that helps recruiters prepare targeted interview questions. Your questions should help verify candidate claims, probe for deeper knowledge, and uncover potential fit issues. Be specific and professional."
+    }
+    
+    user_message = {
+        "role": "user",
+        "content": prompt
+    }
+    
+    result = client.get_chat_completion(
+        messages=[system_message, user_message],
+        temperature=0.7,
+        max_tokens=1500
+    )
+    
+    return result if result else "Failed to generate interview questions due to an error."
 
 
 def summarize_cv_analyses(analyses: List[Dict[str, Any]]) -> str:
