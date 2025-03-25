@@ -15,7 +15,6 @@ def render_sidebar():
     """Render the sidebar UI components and handle sidebar interactions."""
     st.sidebar.header("Upload CVs")
 
-    # Multi-file uploader for CVs
     uploaded_files = st.sidebar.file_uploader(
         "Upload CV files (PDF, DOCX, TXT)",
         type=["pdf", "docx", "txt"],
@@ -23,7 +22,6 @@ def render_sidebar():
         key="cv_files"
     )
 
-    # Job Criteria Configuration Section
     st.sidebar.markdown("### ⚙️ Job Criteria Configuration")
     st.sidebar.markdown("""
     **Update Job Criteria**
@@ -38,23 +36,19 @@ def render_sidebar():
     )
 
     if job_criteria_file:
-        # Extract text from the uploaded file
         job_text = extract_text_from_file(job_criteria_file)
 
-        # Setup tabs for previewing content
         preview_tabs = st.sidebar.tabs(["Extracted Text", "Generated JSON"])
 
         with preview_tabs[0]:
             st.text_area("Extracted Text from Document",
                          job_text, height=200)
 
-        # Convert to JSON
         job_criteria = convert_text_to_job_criteria_json(job_text)
 
         with preview_tabs[1]:
             st.json(job_criteria)
 
-        # Update button
         if st.sidebar.button("Update Job Criteria", key="update_criteria"):
             with st.spinner("Updating job criteria..."):
                 if update_job_criteria_in_azure(job_criteria):
@@ -65,7 +59,6 @@ def render_sidebar():
 
     st.sidebar.markdown("---")
 
-    # Note about the application
     st.sidebar.subheader("About This Application")
     st.sidebar.text(
         "This application analyzes CVs using an AI model, "
@@ -75,20 +68,8 @@ def render_sidebar():
         "candidate qualification scores, and specific recommendations."
     )
 
-    # Note about criteria
-    st.sidebar.subheader("Evaluation Criteria")
-    st.sidebar.text(
-        "Each CV is evaluated against position requirements "
-        "with numerical scoring and detailed feedback across "
-        "key categories. The comparative summary tab uses "
-        "Azure OpenAI to provide side-by-side candidate "
-        "comparisons to help with hiring decisions."
-    )
-
-    # Process button
     process_button = st.sidebar.button("Analyze CVs", type="primary")
 
-    # Export results button
     if st.session_state.get('analysis_completed'):
         export_results = st.sidebar.download_button(
             label="Export Results as CSV",
@@ -98,7 +79,6 @@ def render_sidebar():
             mime="text/csv"
         )
 
-        # Add clear results button
         if st.sidebar.button("Clear Results", type="secondary"):
             st.session_state['analysis_completed'] = False
             st.session_state['results'] = []
