@@ -2,20 +2,18 @@
 # syntax=docker/dockerfile:1
 FROM docker.io/library/python:3.12-slim
 
-RUN pip install --upgrade pip
-
 # Set environment variable to ensure streamlit runs correctly in Docker
 ENV STREAMLIT_SERVER_PORT=8080
 ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
 
 EXPOSE 8080
 
-WORKDIR /src
+WORKDIR /usr/src/app
 
-COPY ../src .
+COPY ./src .
+COPY requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements.txt 
-
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 ENTRYPOINT ["streamlit", "run", "app.py"]
-#CMD streamlit run app.py

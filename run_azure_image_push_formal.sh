@@ -3,7 +3,7 @@
 # Default parameter values
 IMAGE_NAME="hr-ui:dev-uat"
 CONTAINER_APP_NAME="hr-ui-app"
-DOCKERFILE_PATH="./docker/docker_file.dockerfile"
+DOCKERFILE_PATH="Dockerfile"
 RESOURCE_GROUP="arg-syd-ing-dev-shared"
 ACR_NAME="acrsydingdevkfpqjli23em5m"
 CONTAINER_APP_ENVIRONMENT="ingen-container-app-env"
