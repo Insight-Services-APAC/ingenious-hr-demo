@@ -125,7 +125,6 @@ The **Comparative Summary** tab provides:
 - **app.py**: Main Streamlit application file containing the UI and API integration logic
 - **config.py**: Configuration settings and environment variable handling
 - **services/**: Directory containing API clients and service integrations
-  - **api_client.py**: FastAgent API client for CV analysis
   - **openai_client.py**: Azure OpenAI client for comparative summaries
   - **blob_storage.py**: Azure Blob storage client
   - **text_extraction.py**: Document text extraction utilities
