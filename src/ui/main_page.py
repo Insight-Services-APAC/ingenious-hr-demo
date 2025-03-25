@@ -47,8 +47,8 @@ def process_cvs(uploaded_files) -> List[Dict[str, Any]]:
             }
             results.append(result)
 
-            # Simulate API delay to not overwhelm the server
-            time.sleep(0.5)
+            # # Simulate API delay to not overwhelm the server
+            # time.sleep(0.5)
 
         # Reset summary state when processing new CVs
         if 'summary_generated' in st.session_state:
