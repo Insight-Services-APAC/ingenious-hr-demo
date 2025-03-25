@@ -2,7 +2,7 @@
 
 A Streamlit-based application that analyzes multiple CV/resume documents using a sophisticated AI model, providing detailed feedback and comparison tools for recruitment processes.
 
-![CV Analysis Tool](images/homepage.png)
+![CV Analysis Tool](app/images/homepage.png)
 
 ## Overview
 

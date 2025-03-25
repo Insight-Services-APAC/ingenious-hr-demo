@@ -90,7 +90,7 @@ def display_results(results: List[Dict[str, Any]]):
                     chat_dict = header.get('__dict__', {})
                     chat_name = chat_dict.get('chat_name', '')
 
-                    if chat_name in ["summary", "applicant_lookup_agent"]:
+                    if chat_name in ["summary"]:
                         chat_response = chat_dict.get('chat_response', {})
                         chat_message = chat_response.get('chat_message', {})
                         content = chat_message.get(
