@@ -1,5 +1,5 @@
 """
-Configuration settings for the CV Analysis Tool.
+Configuration settings for the SoCa (Submission over Criteria) Analysis Tool.
 Loads environment variables and provides application configuration.
 """
 
@@ -33,7 +33,7 @@ AZURE_OPENAI_DEPLOYMENT_NAME = os.getenv(
 def configure_page():
     """Configure the Streamlit page settings."""
     st.set_page_config(
-        page_title="CV Analysis Tool",
+        page_title="SoCa: Submission over Criteria",
         page_icon="📄",
         layout="wide",
         initial_sidebar_state="expanded"

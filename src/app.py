@@ -1,15 +1,15 @@
 """
-CV Analysis Tool - Main Application Entry Point
+SoCa (Submission over Criteria) Analysis Tool - Main Application Entry Point
 
-A Streamlit-based application that analyzes multiple CV/resume documents
+A Streamlit-based application that analyzes multiple submission documents
 using a sophisticated AI model, providing detailed feedback and comparison
-tools for recruitment processes.
+tools for evaluation processes.
 """
 
 import streamlit as st
 from config import configure_page
 from services import extract_text_from_file
-from ui.main_page import process_cvs, display_results
+from ui.main_page import process_submissions, display_results
 from ui.sidebar import render_sidebar
 from utils.helpers import convert_text_to_job_criteria_json, update_job_criteria_in_azure
 
@@ -18,7 +18,8 @@ def main():
     """Main application entry point."""
     configure_page()
 
-    st.title("📄 CV Analysis Tool")
+    st.title("📄 SoCa: Submission over Criteria")
+    st.markdown("*AI-powered submission analysis and evaluation*")
 
     # Initialize session state if not exists
     if 'analysis_completed' not in st.session_state:
@@ -31,11 +32,11 @@ def main():
     # Main content area
     if not uploaded_files:
         st.info(
-            "Please upload one or more CV files from the sidebar to begin analysis.")
+            "Please upload one or more submission files from the sidebar to begin analysis.")
 
         with st.expander("View Example Analysis"):
             st.markdown("""
-            ### Example CV Analysis Result
+            ### Example Submission Analysis Result
             
             #### Evaluation Report
 
@@ -54,7 +55,7 @@ def main():
             John holds a Bachelor's degree in Computer Science from the University of Technology, meeting the educational requirement for the position.
 
             #### Communication Skills
-            John's CV is well-written with clear descriptions of his responsibilities and achievements, indicating good written communication skills.
+            John's submission is well-written with clear descriptions of his responsibilities and achievements, indicating good written communication skills.
 
             ### Scoring:
 
@@ -63,16 +64,14 @@ def main():
             | Technical Skills | 5 | Strong experience in all required technologies. |
             | Experience | 5 | Exceeds required years of experience and has leadership experience. |
             | Education | 5 | Holds relevant degree in Computer Science. |
-            | Communication Skills | 4 | Well-written CV demonstrates good communication ability. |
+            | Communication Skills | 4 | Well-written submission demonstrates good communication ability. |
 
-            ### Recommendation:
-            John Smith is highly suitable for the position with a strong technical background, relevant experience, and appropriate education. His profile indicates he would be a valuable addition to the team.
             """)
 
     elif process_button or st.session_state.get('analysis_completed'):
-        # Process CVs if button was clicked or we already have results
+        # Process submissions if button was clicked or we already have results
         if not st.session_state['analysis_completed'] and process_button:
-            results = process_cvs(uploaded_files)
+            results = process_submissions(uploaded_files)
 
             st.session_state['results'] = results
             st.session_state['thread_ids'] = [

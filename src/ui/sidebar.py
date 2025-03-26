@@ -1,5 +1,5 @@
 """
-Sidebar UI components for the CV Analysis Tool.
+Sidebar UI components for the SoCa (Submission over Criteria) Analysis Tool.
 """
 
 import streamlit as st
@@ -13,69 +13,49 @@ from utils.helpers import convert_text_to_job_criteria_json, update_job_criteria
 
 def render_sidebar():
     """Render the sidebar UI components and handle sidebar interactions."""
-    st.sidebar.header("Upload CVs")
+    # Main functionality section at the top
+    st.sidebar.header("SoCa: Submission over Criteria")
+    st.sidebar.markdown("*A demonstration of AI-powered submission analysis*")
 
+    # Submission Upload
     uploaded_files = st.sidebar.file_uploader(
-        "Upload CV files (PDF, DOCX, TXT)",
+        "Upload Submissions (PDF, DOCX, TXT)",
         type=["pdf", "docx", "txt"],
         accept_multiple_files=True,
         key="cv_files"
     )
 
-    st.sidebar.markdown("### ⚙️ Job Criteria Configuration")
-    st.sidebar.markdown("""
-    **Update Job Criteria**
-    
-    Upload a job description document to update the criteria used for evaluating CVs.
-    """)
+    # Criteria Configuration
+    st.sidebar.markdown("### Criteria Configuration")
 
     job_criteria_file = st.sidebar.file_uploader(
-        "Upload Job Criteria Document (PDF, DOCX)",
+        "Upload Criteria Document (PDF, DOCX)",
         type=["pdf", "docx"],
         key="job_criteria_file"
     )
 
     if job_criteria_file:
         job_text = extract_text_from_file(job_criteria_file)
-
-        preview_tabs = st.sidebar.tabs(["Extracted Text", "Generated JSON"])
-
-        with preview_tabs[0]:
-            st.text_area("Extracted Text from Document",
-                         job_text, height=200)
-
         job_criteria = convert_text_to_job_criteria_json(job_text)
 
-        with preview_tabs[1]:
-            st.json(job_criteria)
-
-        if st.sidebar.button("Update Job Criteria", key="update_criteria"):
-            with st.spinner("Updating job criteria..."):
+        if st.sidebar.button("Update Criteria", key="update_criteria"):
+            with st.spinner("Updating criteria..."):
                 if update_job_criteria_in_azure(job_criteria):
-                    st.sidebar.success("Job criteria updated successfully!")
+                    st.sidebar.success("Criteria updated successfully!")
                 else:
                     st.sidebar.error(
-                        "Failed to update job criteria. Check logs for details.")
+                        "Failed to update criteria. Check logs for details.")
 
-    st.sidebar.markdown("---")
+    # Analyze button positioned right after uploads
+    process_button = st.sidebar.button("Analyze Submissions", type="primary")
 
-    st.sidebar.subheader("About This Application")
-    st.sidebar.text(
-        "This application analyzes CVs using an AI model, "
-        "providing comprehensive evaluations with scorecards, "
-        "detailed assessments, and comparative summaries. "
-        "It delivers structured insights including position fit, "
-        "candidate qualification scores, and specific recommendations."
-    )
-
-    process_button = st.sidebar.button("Analyze CVs", type="primary")
-
+    # Export/Clear results buttons if analysis is completed
     if st.session_state.get('analysis_completed'):
         export_results = st.sidebar.download_button(
             label="Export Results as CSV",
             data=pd.DataFrame(st.session_state.get(
                 'results', [])).to_csv(index=False),
-            file_name="cv_analysis_results.csv",
+            file_name="submission_analysis_results.csv",
             mime="text/csv"
         )
 
@@ -84,5 +64,23 @@ def render_sidebar():
             st.session_state['results'] = []
             st.session_state['thread_ids'] = []
             st.rerun()
+
+    # Separator before information section
+    st.sidebar.markdown("---")
+
+    st.sidebar.subheader("About SoCa")
+    st.sidebar.markdown(
+        "SoCa (Submission over Criteria) is an app template that "
+        "can be deployed for various use cases where submissions "
+        "need to be evaluated against specific criteria."
+    )
+
+    st.sidebar.text(
+        "This demonstration analyzes submissions using an AI model, "
+        "providing comprehensive evaluations with scorecards, "
+        "detailed assessments, and comparative analysis. "
+        "It delivers structured insights related to the criteria fit "
+        "and specific recommendations."
+    )
 
     return uploaded_files, process_button

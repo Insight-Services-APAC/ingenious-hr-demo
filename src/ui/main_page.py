@@ -1,5 +1,5 @@
 """
-Main page UI logic for the CV Analysis Tool.
+Main page UI logic for the SoCa (Submission over Criteria) Analysis Tool.
 """
 
 import streamlit as st
@@ -9,16 +9,16 @@ import pandas as pd
 import pyperclip
 from typing import List, Dict, Any
 
-from services import APIClient, extract_text_from_file, summarize_cv_analyses
-from services.openai_client import generate_interview_questions
+from services import APIClient, extract_text_from_file, summarize_submission_analyses
+from services.openai_client import generate_followup_questions
 from ui.components import display_feedback_buttons, create_download_link
 
 
-def process_cvs(uploaded_files) -> List[Dict[str, Any]]:
-    """Process uploaded CV files and send them to the API for analysis."""
+def process_submissions(uploaded_files) -> List[Dict[str, Any]]:
+    """Process uploaded submission files and send them to the API for analysis."""
     results = []
 
-    with st.spinner("Analyzing CVs..."):
+    with st.spinner("Analyzing Submissions..."):
         progress_bar = st.progress(0)
 
         for i, uploaded_file in enumerate(uploaded_files):
@@ -27,12 +27,12 @@ def process_cvs(uploaded_files) -> List[Dict[str, Any]]:
             progress_bar.progress(progress)
 
             # Extract text
-            cv_text = extract_text_from_file(uploaded_file)
+            submission_text = extract_text_from_file(uploaded_file)
 
             # Send to API
-            identifier = f"cv_{i+1}"
+            identifier = f"submission_{i+1}"
             response = APIClient.create_chat(
-                cv_text, identifier=identifier)
+                submission_text, identifier=identifier)
 
             # Log the response for debugging if needed
             if "error" in response:
@@ -42,17 +42,14 @@ def process_cvs(uploaded_files) -> List[Dict[str, Any]]:
 
             # Store result
             result = {
-                "CV Name": uploaded_file.name,
+                "Submission Name": uploaded_file.name,
                 "Analysis": response.get("agent_response", "Analysis failed"),
                 "Thread ID": response.get("thread_id", ""),
                 "Message ID": response.get("message_id", "")
             }
             results.append(result)
 
-            # # Simulate API delay to not overwhelm the server
-            # time.sleep(0.5)
-
-        # Reset summary state when processing new CVs
+        # Reset summary state when processing new submissions
         if 'summary_generated' in st.session_state:
             st.session_state['summary_generated'] = False
             if 'summary_content' in st.session_state:
@@ -62,24 +59,26 @@ def process_cvs(uploaded_files) -> List[Dict[str, Any]]:
 
 
 def display_results(results: List[Dict[str, Any]]):
-    """Display the analysis results for the uploaded CVs."""
+    """Display the analysis results for the uploaded submissions."""
     if not results:
         return
 
-    st.header("Analysis Results")
+    st.header("SoCa Analysis Results")
+    st.markdown("*Submission over Criteria assessment*")
 
-    # Create tabs for each CV, a summary tab, and an interview questions tab
-    tab_names = [result["CV Name"] for result in results] + ["🔍 Comparative Summary", "🎯 Interview Questions"]
+    # Create tabs for each submission, a summary tab, and a follow-up questions tab
+    tab_names = [result["Submission Name"] for result in results] + \
+        ["🔍 Comparative Analysis", "🔗 Follow-up Questions"]
     tabs = st.tabs(tab_names)
 
-    # Display individual CV tabs
-    # All tabs except the last two (summary and interview questions)
+    # Display individual submission tabs
+    # All tabs except the last two (comparative analysis and follow-up questions)
     for i, tab in enumerate(tabs[:-2]):
         with tab:
             result = results[i]
 
-            # CV name and metadata
-            st.subheader(f"CV: {result['CV Name']}")
+            # Submission name and metadata
+            st.subheader(f"Submission: {result['Submission Name']}")
 
             # Analysis result
             st.markdown("### Analysis")
@@ -110,15 +109,15 @@ def display_results(results: List[Dict[str, Any]]):
     if not st.session_state.get('summary_generated', False) or 'summary_content' not in st.session_state:
         # Generate the summary automatically when results are first displayed
         try:
-            with st.spinner("Generating comparative summary of all CVs..."):
+            with st.spinner("Generating comparative analysis of all submissions..."):
                 # Check if OpenAI API credentials are configured
                 from config import AZURE_OPENAI_KEY, AZURE_OPENAI_ENDPOINT
                 if not AZURE_OPENAI_KEY or not AZURE_OPENAI_ENDPOINT:
                     st.session_state['summary_generated'] = False
-                    st.session_state['summary_content'] = "⚠️ Azure OpenAI API credentials not configured. Please add them to your .env file to enable the comparative summary feature."
+                    st.session_state['summary_content'] = "⚠️ Azure OpenAI API credentials not configured. Please add them to your .env file to enable the comparative analysis feature."
                 else:
                     # Generate summary using Azure OpenAI
-                    summary = summarize_cv_analyses(results)
+                    summary = summarize_submission_analyses(results)
 
                     # Store in session state
                     st.session_state['summary_generated'] = True
@@ -126,18 +125,19 @@ def display_results(results: List[Dict[str, Any]]):
         except Exception as e:
             st.session_state['summary_generated'] = False
             st.session_state[
-                'summary_content'] = f"⚠️ Error generating summary: {str(e)}. Please check your Azure OpenAI API credentials."
+                'summary_content'] = f"⚠️ Error generating analysis: {str(e)}. Please check your Azure OpenAI API credentials."
 
     # Display summary tab
     with tabs[-2]:
-        st.subheader("Comparative Summary of All CVs")
+        st.subheader("Objective Comparative Analysis")
+        st.markdown("*Comparing submissions against the defined criteria*")
 
         # Display the summary (either newly generated or from cache)
         st.markdown(st.session_state.get('summary_content', ''))
 
         # Provide button to regenerate if needed
-        if st.button("Regenerate Summary", key="regenerate_summary"):
-            with st.spinner("Regenerating comprehensive comparison..."):
+        if st.button("Regenerate Analysis", key="regenerate_summary"):
+            with st.spinner("Regenerating comparative analysis..."):
                 try:
                     # Check if OpenAI API credentials are configured
                     from config import AZURE_OPENAI_KEY, AZURE_OPENAI_ENDPOINT
@@ -146,7 +146,7 @@ def display_results(results: List[Dict[str, Any]]):
                             "Azure OpenAI API credentials not configured. Please add them to your .env file.")
                     else:
                         # Generate fresh summary using Azure OpenAI
-                        summary = summarize_cv_analyses(results)
+                        summary = summarize_submission_analyses(results)
 
                         # Update session state
                         st.session_state['summary_generated'] = True
@@ -155,33 +155,36 @@ def display_results(results: List[Dict[str, Any]]):
                         # Refresh the UI
                         st.rerun()
                 except Exception as e:
-                    st.error(f"Error generating summary: {str(e)}")
-    
-    # Display interview questions tab
+                    st.error(f"Error generating analysis: {str(e)}")
+
+    # Display follow-up questions tab
     with tabs[-1]:
-        st.subheader("Generate Tailored Interview Questions")
-        
+        st.subheader("Generate Follow-up Questions")
+        st.markdown("*Create targeted questions based on submission analysis*")
+
         st.markdown("""
-        Generate tailored interview questions based on a candidate's CV analysis. 
-        The questions will focus on verifying technical knowledge, exploring potential gaps, 
-        and assessing behavioral fit for the role.
+        Generate tailored follow-up questions based on a submission's analysis. 
+        These questions will help clarify information, explore potential areas of interest, 
+        and gather additional insights about the submission.
         """)
-        
-        # Initialize session state for interview questions if not exists
-        if 'interview_questions' not in st.session_state:
-            st.session_state['interview_questions'] = {}
-        
-        # Dropdown to select a CV
-        cv_options = [result["CV Name"] for result in results]
-        selected_cv = st.selectbox("Select a CV", cv_options, key="interview_cv_selector")
-        
-        # Get the selected CV's index
-        selected_index = cv_options.index(selected_cv)
+
+        # Initialize session state for follow-up questions if not exists
+        if 'followup_questions' not in st.session_state:
+            st.session_state['followup_questions'] = {}
+
+        # Dropdown to select a submission
+        submission_options = [result["Submission Name"] for result in results]
+        selected_submission = st.selectbox(
+            "Select a Submission", submission_options, key="followup_submission_selector")
+
+        # Get the selected submission's index
+        selected_index = submission_options.index(selected_submission)
         selected_result = results[selected_index]
-        
-        # Generate interview questions button
-        generate_button = st.button("Generate Interview Questions", type="primary", key="generate_questions")
-        
+
+        # Generate follow-up questions button
+        generate_button = st.button(
+            "Generate Follow-up Questions", type="primary", key="generate_questions")
+
         # Check if we should display existing questions or generate new ones
         if generate_button:
             try:
@@ -191,60 +194,66 @@ def display_results(results: List[Dict[str, Any]]):
                     st.error(
                         "Azure OpenAI API credentials not configured. Please add them to your .env file.")
                 else:
-                    # Generate interview questions using Azure OpenAI
-                    with st.spinner(f"Generating tailored interview questions for {selected_cv}..."):
-                        questions = generate_interview_questions(selected_result)
-                        
-                        # Store in session state with CV name as key
-                        st.session_state['interview_questions'][selected_cv] = questions
-                        
+                    # Generate follow-up questions using Azure OpenAI
+                    with st.spinner(f"Generating tailored follow-up questions for {selected_submission}..."):
+                        questions = generate_followup_questions(
+                            selected_result)
+
+                        # Store in session state with submission name as key
+                        st.session_state['followup_questions'][selected_submission] = questions
+
                         # Display the questions
-                        st.markdown("### Tailored Interview Questions")
+                        st.markdown("### Tailored Follow-up Questions")
                         st.markdown(questions)
-                        
+
                         # Add copy to clipboard functionality
                         if st.button("📋 Copy Questions to Clipboard", key="copy_questions"):
                             try:
                                 pyperclip.copy(questions)
                                 st.success("Questions copied to clipboard!")
                             except Exception:
-                                st.error("Unable to copy to clipboard. Please select and copy manually.")
-                        
+                                st.error(
+                                    "Unable to copy to clipboard. Please select and copy manually.")
+
                         # Add export functionality
                         export_questions = create_download_link(
                             questions,
-                            f"interview_questions_{selected_cv.replace(' ', '_')}.txt",
+                            f"followup_questions_{selected_submission.replace(' ', '_')}.txt",
                             "📥 Download Questions as Text File"
                         )
                         st.markdown(export_questions, unsafe_allow_html=True)
             except Exception as e:
-                st.error(f"Error generating interview questions: {str(e)}")
-        elif selected_cv in st.session_state['interview_questions']:
+                st.error(f"Error generating follow-up questions: {str(e)}")
+        elif selected_submission in st.session_state['followup_questions']:
             # Display existing questions from session state
-            st.markdown("### Tailored Interview Questions")
-            st.markdown(st.session_state['interview_questions'][selected_cv])
-            
+            st.markdown("### Tailored Follow-up Questions")
+            st.markdown(
+                st.session_state['followup_questions'][selected_submission])
+
             # Add copy to clipboard functionality
             if st.button("📋 Copy Questions to Clipboard", key="copy_existing_questions"):
                 try:
-                    pyperclip.copy(st.session_state['interview_questions'][selected_cv])
+                    pyperclip.copy(
+                        st.session_state['followup_questions'][selected_submission])
                     st.success("Questions copied to clipboard!")
                 except Exception:
-                    st.error("Unable to copy to clipboard. Please select and copy manually.")
-            
+                    st.error(
+                        "Unable to copy to clipboard. Please select and copy manually.")
+
             # Add export functionality
             export_questions = create_download_link(
-                st.session_state['interview_questions'][selected_cv],
-                f"interview_questions_{selected_cv.replace(' ', '_')}.txt",
+                st.session_state['followup_questions'][selected_submission],
+                f"followup_questions_{selected_submission.replace(' ', '_')}.txt",
                 "📥 Download Questions as Text File"
             )
             st.markdown(export_questions, unsafe_allow_html=True)
-            
+
             # Add regenerate button
             if st.button("🔄 Regenerate Questions", key="regenerate_questions"):
                 # Remove existing questions to force regeneration
-                if selected_cv in st.session_state['interview_questions']:
-                    del st.session_state['interview_questions'][selected_cv]
+                if selected_submission in st.session_state['followup_questions']:
+                    del st.session_state['followup_questions'][selected_submission]
                 st.rerun()
         else:
-            st.info("Click the 'Generate Interview Questions' button to create tailored questions for this candidate.")
+            st.info(
+                "Click the 'Generate Follow-up Questions' button to create tailored questions for this submission.")
